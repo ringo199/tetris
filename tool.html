@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2转16进制</title>
+</head>
+<body>
+    <input type="number" id="input1" />
+    <div id="output1"></div>
+    <script>
+        ;(function () {
+            const input1 = document.getElementById("input1")
+            input1.onkeydown = function (e) { // 回车提交表单
+            // 兼容FF和IE和Opera
+                var theEvent = window.event || e;
+                var code = theEvent.keyCode || theEvent.which || theEvent.charCode;
+                if (code == 13) {
+                    const output1 = document.getElementById("output1")
+                    const num2 = input1.value
+                    const num16 = parseInt(num2, 2).toString(16)
+                    output1.innerText = num16
+                }
+            }
+        })()
+    </script>
+</body>
+</html>
