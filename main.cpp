@@ -61,8 +61,8 @@ public:
 
     struct area_item
     {
-        unsigned char data;
-        unsigned char status;
+        unsigned char data; // 颜色数据
+        unsigned char status; // 0 固定块 1 活动快 2 预测块
     };
 
     std::vector<std::vector<area_item>> area_a;
@@ -315,6 +315,66 @@ public:
 
         if (isFalling)
         {
+            {
+                // 首先清理预测落点数据
+                for (int i = 0; i < area_a.size(); ++i)
+                {
+                    for (int j = 0; j < area_a[i].size(); ++j)
+                    {
+                        if (area_a[i][j].status == 2)
+                        {
+                            area_a[i][j] = {0, 0};
+                        }
+                    }
+                }
+                // 下落状态预测落点
+                // 1.收集活动块颜色和位置数据集
+                int data = 1;
+                std::vector<std::pair<int, int>> coords;
+                for (int i = 0; i < area_a.size(); ++i)
+                {
+                    for (int j = 0; j < area_a[i].size(); ++j)
+                    {
+                        if (area_a[i][j].status == 1 && area_a[i][j].data != 0)
+                        {
+                            data = area_a[i][j].data;
+                            coords.push_back(std::make_pair(j, i));
+                        }
+                    }
+                }
+                // 2. 将活动快落点整体增加，直到碰到非活动快或者底边为止
+                int diffy;
+                for (diffy = 0;; ++diffy)
+                {
+                    bool isBreak = false;
+                    for (auto& coord : coords)
+                    {
+                        if (area_a[coord.second + diffy][coord.first].data != 0
+                         && area_a[coord.second + diffy][coord.first].status == 0)
+                        {
+                            --diffy;
+                            isBreak = true;
+                            break;
+                        }
+                        if (coord.second + diffy == area_a.size() - 1)
+                        {
+                            isBreak = true;
+                            break;
+                        }
+                    }
+                    if (isBreak) break;
+                }
+
+                for (auto& coord : coords)
+                {
+                    if (area_a[coord.second + diffy][coord.first].data != 0)
+                        continue;
+
+                    area_a[coord.second + diffy][coord.first].status = 2;
+                    area_a[coord.second + diffy][coord.first].data = data;
+                }
+            }
+
             for (int i = 0; i < area_a.size(); ++i)
             {
                 for (int j = 0; j < area_a[i].size(); ++j)
@@ -344,6 +404,7 @@ public:
             // 如果当前非静止态
             if (isFalling)
             {
+                // 将当前方块落到下一级
                 for (int i = area_a.size(); i >= 0; --i)
                 {
                     for (int j = 0; j < area_a[i].size(); ++j)
@@ -358,11 +419,13 @@ public:
             }
             else
             {
+                // 当前非下落状态则清空status
                 for (int i = 0; i < area_a.size(); ++i)
                 {
                     for (int j = 0; j < area_a[i].size(); ++j)
                     {
-                        area_a[i][j].status = 0;
+                        if (area_a[i][j].status == 1)
+                            area_a[i][j].status = 0;
                     }
                 }
             }
@@ -390,8 +453,70 @@ public:
                     }
                 }
             }
-            // 延迟一秒用来生成其他随机数
-            sleep(1);
+
+            // 首次由b点召唤方块到a点
+            {
+                // 首先清理预测落点数据
+                for (int i = 0; i < area_a.size(); ++i)
+                {
+                    for (int j = 0; j < area_a[i].size(); ++j)
+                    {
+                        if (area_a[i][j].status == 2)
+                        {
+                            area_a[i][j] = {0, 0};
+                        }
+                    }
+                }
+                // 下落状态预测落点
+                // 1.收集活动块颜色和位置数据集
+                int data = 1;
+                std::vector<std::pair<int, int>> coords;
+                for (int i = 0; i < area_a.size(); ++i)
+                {
+                    for (int j = 0; j < area_a[i].size(); ++j)
+                    {
+                        if (area_a[i][j].status == 1 && area_a[i][j].data != 0)
+                        {
+                            data = area_a[i][j].data;
+                            coords.push_back(std::make_pair(j, i));
+                        }
+                    }
+                }
+                // 2. 将活动快落点整体增加，直到碰到非活动快或者底边为止
+                int diffy;
+                for (diffy = 0;; ++diffy)
+                {
+                    bool isBreak = false;
+                    for (auto& coord : coords)
+                    {
+                        if (area_a[coord.second + diffy][coord.first].data != 0
+                         && area_a[coord.second + diffy][coord.first].status == 0)
+                        {
+                            --diffy;
+                            isBreak = true;
+                            break;
+                        }
+                        if (coord.second + diffy == area_a.size() - 1)
+                        {
+                            isBreak = true;
+                            break;
+                        }
+                    }
+                    if (isBreak) break;
+                }
+
+                for (auto& coord : coords)
+                {
+                    if (area_a[coord.second + diffy][coord.first].data != 0)
+                        continue;
+
+                    area_a[coord.second + diffy][coord.first].status = 2;
+                    area_a[coord.second + diffy][coord.first].data = data;
+                }
+            }
+
+            // 延迟用来生成其他随机数
+            usleep(1000);
             random4areaB();
         }
     }
@@ -405,12 +530,34 @@ public:
         s.append(unit);
         s.append("\033[0m");
     }
+    void renderColorBlock(std::string& s,
+        std::string& unit,
+        std::string& unit_prediction,
+        int status,
+        int type)
+    {
+        s.append("\033[3");
+        char type_ = '0' + type;
+        s.append(1, type_);
+        s.append("m");
+        if (status == 2)
+        {
+            s.append(unit_prediction);
+        }
+        else
+        {
+            s.append(unit);
+        }
+        s.append("\033[0m");
+    }
 
     std::string render()
     {
         std::string s = "";
         std::string unit = "██";
         std::string unit_short = "▇▇";
+        std::string unit_prediction = "▤▤";
+
         std::string blank = "  ";
         // =========================第一排框
 
@@ -441,7 +588,7 @@ public:
             for (int i = 0; i < cfg.width; ++i)
             {
                 if (area_a[j][i].data != 0)
-                    renderColorBlock(s, unit_short, area_a[j][i].data);
+                    renderColorBlock(s, unit_short, unit_prediction, area_a[j][i].status, area_a[j][i].data);
                     // s.append(unit);
                 else
                     s.append(blank);
@@ -477,7 +624,7 @@ public:
         for (int i = 0; i < cfg.width; ++i)
         {
             if (area_a[BLOCK_SIZE + 2][i].data != 0)
-                renderColorBlock(s, unit_short, area_a[BLOCK_SIZE + 2][i].data);
+                renderColorBlock(s, unit_short, unit_prediction, area_a[BLOCK_SIZE + 2][i].status, area_a[BLOCK_SIZE + 2][i].data);
                 // s.append(unit);
             else
                 s.append(blank);
@@ -503,7 +650,7 @@ public:
             for (int i = 0; i < cfg.width; ++i)
             {
                 if (area_a[BLOCK_SIZE + 2 + 1 + j][i].data != 0)
-                    renderColorBlock(s, unit_short, area_a[BLOCK_SIZE + 2 + 1 + j][i].data);
+                    renderColorBlock(s, unit_short, unit_prediction, area_a[BLOCK_SIZE + 2 + 1 + j][i].status, area_a[BLOCK_SIZE + 2 + 1 + j][i].data);
                     // s.append(unit);
                 else
                     s.append(blank);
@@ -514,7 +661,7 @@ public:
             char score_buf[16];
             char m_class_buf[16];
             sprintf(score_buf, "%08d", score);
-            sprintf(m_class_buf, "等级：%06d", m_class);
+            sprintf(m_class_buf, "等级：%04d", m_class);
             
             for (int i = 0; i < BLOCK_SIZE; ++i)
             {
