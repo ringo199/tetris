@@ -56,6 +56,7 @@ public:
 
     config cfg;
     int score = 0;
+    int m_class = 1;
     bool isGG = false;
 
     struct area_item
@@ -269,6 +270,7 @@ public:
                     }
                 }
             }
+            m_class = 1 + score / 10;
         }
     }
 
@@ -278,6 +280,7 @@ public:
         isInit = false;
         isFalling = false;
         score = 0;
+        m_class = 1;
     }
 
     void gameOver()
@@ -509,7 +512,10 @@ public:
             // c区
             s.append(blank);
             char score_buf[16];
+            char m_class_buf[16];
             sprintf(score_buf, "%08d", score);
+            sprintf(m_class_buf, "等级：%06d", m_class);
+            
             for (int i = 0; i < BLOCK_SIZE; ++i)
             {
                 if (j == 1 && i == 0)
@@ -519,6 +525,10 @@ public:
                 else if (j == 2 && i == 1)
                 {
                     s.append(score_buf);
+                }
+                else if (j == 3 && i == 0)
+                {
+                    s.append(m_class_buf);
                 }
                 else if (j == 5 && i == 1 && isGG)
                 {
@@ -573,7 +583,7 @@ public:
     "██                    ██              \n"
     "██                    ██  分数:        \n"
     "██                    ██  00000000000 \n"
-    "██                    ██              \n"
+    "██                    ██  等级：000000 \n"
     "██                    ██              \n"
     "██                    ██   game over  \n"
     "██                    ██              \n"
@@ -647,7 +657,7 @@ void init()
 
 void update()
 {
-    sleep(1);
+    usleep(1000000 / gm.m_class);
 
     gm.progress();
 

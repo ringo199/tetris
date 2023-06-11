@@ -7,22 +7,53 @@
     <title>2转16进制</title>
 </head>
 <body>
-    <input type="number" id="input1" />
+    <!-- <input type="number" id="input1" /> -->
     <div id="output1"></div>
     <script>
         ;(function () {
-            const input1 = document.getElementById("input1")
-            input1.onkeydown = function (e) { // 回车提交表单
-            // 兼容FF和IE和Opera
-                var theEvent = window.event || e;
-                var code = theEvent.keyCode || theEvent.which || theEvent.charCode;
-                if (code == 13) {
-                    const output1 = document.getElementById("output1")
-                    const num2 = input1.value
-                    const num16 = parseInt(num2, 2).toString(16)
-                    output1.innerText = num16
+            for (let i = 0; i < 4; ++i)
+            {
+                const wrap = document.createElement("div")
+                for (let j = 0; j < 4; ++j)
+                {
+                    const btn = document.createElement("button")
+                    btn.setAttribute("id", `btn-${i * 4 + j}`)
+                    btn.innerText = "0"
+                    btn.addEventListener("click", () => {
+                        btn.innerText = btn.innerText === "0" ? "1" : "0"
+                    }, false)
+                    wrap.appendChild(btn)
                 }
+                document.body.appendChild(wrap)
             }
+
+            const submit_btn = document.createElement("button")
+            submit_btn.innerText = "转换为16进制"
+            submit_btn.addEventListener("click", (e) => {
+                const output1 = document.getElementById("output1")
+                let num2 = ""
+                for (let i = 0; i < 4 * 4; ++i)
+                {
+                    const btn = document.getElementById(`btn-${i}`)
+                    num2 += btn.innerText
+                }
+                const num16 = parseInt(num2, 2).toString(16)
+                output1.innerText = num16
+            }, false)
+            document.body.appendChild(submit_btn)
+
+            // const input1 = document.getElementById("input1")
+            // input1.onkeydown = function (e) { // 回车提交表单
+            // // 兼容FF和IE和Opera
+            //     var theEvent = window.event || e;
+            //     var code = theEvent.keyCode || theEvent.which || theEvent.charCode;
+            //     if (code == 13) {
+            //         const output1 = document.getElementById("output1")
+            //         const num2 = input1.value
+            //         const num16 = parseInt(num2, 2).toString(16)
+            //         output1.innerText = num16
+            //     }
+            // }
         })()
     </script>
 </body>
